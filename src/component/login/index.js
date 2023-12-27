@@ -61,7 +61,6 @@ const Login = () => {
         password: loginData.password,
       };
       const response = await loginService.login(reqbody);
-      console.log('response', response);
       if (response.data.success === true) {
         navigate("/chatroom");
       }

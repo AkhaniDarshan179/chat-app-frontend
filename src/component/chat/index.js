@@ -1,10 +1,15 @@
-import React from "react";
 import { styled } from "@mui/system";
-import Drawer from "@mui/material/Drawer";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import TextField from "@mui/material/TextField";
+import Avatar from "@mui/material/Avatar";
 import Button from "@mui/material/Button";
+import chatService from "../../services/chat-service";
+import Drawer from "@mui/material/Drawer";
+import ImageIcon from "@mui/icons-material/Image";
+import List from "@mui/material/List";
+import ListItemAvatar from "@mui/material/ListItemAvatar";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemText from "@mui/material/ListItemText";
+import React, { useEffect, useState } from "react";
+import TextField from "@mui/material/TextField";
 
 const drawerWidth = 240;
 
@@ -32,9 +37,27 @@ const StyledButton = styled(Button)(({ theme }) => ({
 }));
 
 const Chat = () => {
+  const [users, setUsers] = useState([]);
+  const [message, setMessage] = useState();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await chatService.getUsers();
+        setUsers(response.data.data);
+      } catch (error) {
+        console.log(error.message || "An error occurred while fetching users.");
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleChange = (event) => {
+    setMessage(event.target.value);
+  };
+
   return (
     <div style={{ display: "flex" }}>
-      {/* Sidebar */}
       <Drawer
         variant="permanent"
         sx={{
@@ -45,27 +68,35 @@ const Chat = () => {
           },
         }}
       >
-        <List>
-          <ListItem button>Contact 1</ListItem>
-          <ListItem button>Contact 2</ListItem>
-          {/* Add more contacts as needed */}
+        <List
+          sx={{ width: "100%", maxWidth: 360, bgcolor: "background.paper" }}
+        >
+          {users.map((user, index) => (
+            <ListItemButton key={index}>
+              <ListItemAvatar>
+                <Avatar>
+                  <ImageIcon />
+                </Avatar>
+              </ListItemAvatar>
+              <ListItemText primary={user.username} secondary="Jan 9, 2014" />
+            </ListItemButton>
+          ))}
         </List>
       </Drawer>
 
-      {/* Chat Area */}
       <StyledMain>
-        <StyledChatArea>
-          {/* Chat messages go here */}
-        </StyledChatArea>
+        <StyledChatArea>{/* Chat messages go here */}</StyledChatArea>
 
-        {/* Text Field for Typing Message */}
         <StyledTextField
           label="Type your message"
+          id="username"
+          name="username"
+          value={message}
+          onChange={handleChange}
           variant="outlined"
           fullWidth
         />
 
-        {/* Send Button */}
         <StyledButton variant="contained" color="primary">
           Send
         </StyledButton>
