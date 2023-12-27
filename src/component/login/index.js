@@ -43,6 +43,7 @@ const Login = () => {
   const [loginData, setLoginData] = useState({
     username: "",
     password: "",
+    status: 'active',
   });
 
   const handleChange = (event) => {
@@ -59,6 +60,7 @@ const Login = () => {
       const reqbody = {
         username: loginData.username,
         password: loginData.password,
+        status: loginData.status
       };
       const response = await loginService.login(reqbody);
       if (response.data.success === true) {
