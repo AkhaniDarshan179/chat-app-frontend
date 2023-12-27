@@ -21,15 +21,28 @@ import React, { useEffect, useState } from "react";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import Brightness1RoundedIcon from "@mui/icons-material/Brightness1Rounded";
+import io from "socket.io-client";
+import Message from "./message";
 
 const drawerWidth = 240;
+
+let socket;
 
 const Chat = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
-  const [message, setMessage] = useState();
+  const [message, setMessage] = useState("");
+  const [title, setTitle] = useState("");
+
+  const handleSendMessage = () => {
+    if (message) {
+      socket.emit("message", { message, socket_id: users[0].username });
+      setMessage(""); 
+    }
+  };
 
   useEffect(() => {
+    socket = io("http://localhost:8000");
     const fetchData = async () => {
       try {
         const response = await chatService.getUsers();
@@ -38,7 +51,19 @@ const Chat = () => {
         console.log(error.message || "An error occurred while fetching users.");
       }
     };
+
     fetchData();
+
+    socket.on("connect", () => {
+      console.log("hello");
+    });
+    console.log("socket", socket);
+    socket.emit("joined", users);
+
+    
+    return () => {
+      socket.off("connect");
+    };
   }, []);
 
   const handleChange = (event) => {
@@ -49,12 +74,17 @@ const Chat = () => {
     navigate("/login");
   };
 
+  const handleTitle = (name) => {
+    console.log(`Clicked ${name}`);
+    setTitle(name);
+  };
+
   return (
     <div style={{ display: "flex" }}>
       <AppBar position="fixed">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Chat App
+            {title ? title : "ChatApp"}
           </Typography>
           <IconButton
             size="large"
@@ -81,7 +111,10 @@ const Chat = () => {
           sx={{ width: "100%", maxWidth: 360, bgcolor: "background.paper" }}
         >
           {users.map((user, index) => (
-            <ListItemButton key={index}>
+            <ListItemButton
+              key={index}
+              onClick={() => handleTitle(user.username)}
+            >
               <ListItemAvatar>
                 <Avatar>
                   <ImageIcon />
@@ -95,7 +128,9 @@ const Chat = () => {
       </Drawer>
 
       <StyledMain>
-        <StyledChatArea>{/* Chat messages go here */}</StyledChatArea>
+        <StyledChatArea>
+          <Message />
+        </StyledChatArea>
 
         <div
           style={{
@@ -106,8 +141,8 @@ const Chat = () => {
         >
           <StyledTextField
             label="Type your message"
-            id="username"
-            name="username"
+            id="message"
+            name="message"
             value={message}
             onChange={handleChange}
             variant="outlined"
@@ -118,6 +153,7 @@ const Chat = () => {
           <StyledButton
             variant="contained"
             color="primary"
+            onClick={handleSendMessage}
             style={{ marginBottom: "50px" }}
           >
             Send
