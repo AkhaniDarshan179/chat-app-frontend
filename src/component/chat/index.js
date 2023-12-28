@@ -37,10 +37,12 @@ const Chat = () => {
   const [message, setMessage] = useState("");
   const [title, setTitle] = useState("");
   const [socketId, setSocketId] = useState(null);
+  const [chatUser, setChatUser] = useState(null);
 
   // const [searchParams, setSearchParams] = useSearchParams();
 
   const handleSendMessage = () => {
+    console.log("socketId", socketId);
     if (message) {
       socket.emit("sendMessage", { message, currentUser, to: socketId });
       setMessage("");
@@ -49,6 +51,7 @@ const Chat = () => {
 
   const handleChange = (event) => {
     setMessage(event.target.value);
+    // setAllMessages(event.target.value);
   };
 
   const handleLogout = () => {
@@ -75,25 +78,33 @@ const Chat = () => {
     const fetchData = async () => {
       try {
         const response = await chatService.getUsers();
+        console.log("usrers", response.data.data);
         setUsers(response.data.data);
       } catch (error) {
         console.log(error.message || "An error occurred while fetching users.");
       }
     };
 
-    const userId= localStorage.getItem("userId");
+    const userId = localStorage.getItem("userId");
 
     socket.emit("save_socket_id", {
-      userId
+      userId,
     });
 
-     socket.on("messageReceived", (data) => {
-        setAllMessages(data)
-      });
+    socket.on("messageReceived", (data) => {
+      console.log("data", data);
+      setAllMessages((prevAllMessages) => [...prevAllMessages, data.message]);
+    });
 
-      socket.on("user_updates", (data) => {
-        fetchData();
-      });
+    socket.on("user_updates", (data) => {
+      fetchData();
+      console.log(data);
+
+      if (chatUser && data.sockets[chatUser?._id]) {
+        console.log(data.sockets[chatUser?._id]);
+        // setSocketId(data.sockets[chatUser?._id]);
+      }
+    });
 
     fetchData();
 
@@ -107,7 +118,7 @@ const Chat = () => {
       <AppBar position="fixed">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            {title ? title : "ChatApp"}
+            {title ? `${title} ${socketId}` : "ChatApp"}
           </Typography>
           <IconButton
             size="large"
@@ -138,7 +149,8 @@ const Chat = () => {
               key={index}
               onClick={() => {
                 handleTitle(user.username);
-                setSocketId(user.socketId)
+                setSocketId(user.socketId);
+                setChatUser(user);
               }}
             >
               <ListItemAvatar>

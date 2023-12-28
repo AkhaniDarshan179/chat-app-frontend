@@ -1,10 +1,13 @@
 import React from "react";
 
-const ChatArea = (messages) => {
-  const message = messages.messages.message;
+const ChatArea = ({ messages }) => {
+  console.log("messages", messages);
+
   return (
     <div>
-      {message}
+      {messages.map((msg, index) => (
+        <p key={index}>{msg}</p>
+      ))}
     </div>
   );
 };
