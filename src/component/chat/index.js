@@ -1,44 +1,73 @@
-// index.js
 import {
   StyledMain,
   StyledChatArea,
   StyledTextField,
   StyledButton,
 } from "./style";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import AppBar from "@mui/material/AppBar";
 import Avatar from "@mui/material/Avatar";
+import Brightness1RoundedIcon from "@mui/icons-material/Brightness1Rounded";
+import ChatArea from "./message";
 import chatService from "../../services/chat-service";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import ImageIcon from "@mui/icons-material/Image";
+import io from "socket.io-client";
 import List from "@mui/material/List";
 import ListItemAvatar from "@mui/material/ListItemAvatar";
-import { useNavigate } from "react-router-dom";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import LogoutIcon from "@mui/icons-material/Logout";
 import React, { useEffect, useState } from "react";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import Brightness1RoundedIcon from "@mui/icons-material/Brightness1Rounded";
-import io from "socket.io-client";
-import Message from "./message";
+import messagesService from "../../services/messages-service";
 
 const drawerWidth = 240;
 
 let socket;
 
 const Chat = () => {
+  // const history = useHistory();
+  const currentUser = localStorage.getItem("user");
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
+  const [allMessages, setAllMessages] = useState([]);
   const [message, setMessage] = useState("");
   const [title, setTitle] = useState("");
+  const [socketId, setSocketId] = useState(null);
+
+  // const [searchParams, setSearchParams] = useSearchParams();
 
   const handleSendMessage = () => {
     if (message) {
-      socket.emit("message", { message, socket_id: users[0].username });
-      setMessage(""); 
+      socket.emit("sendMessage", { message, currentUser, to: socketId });
+      setMessage("");
     }
+  };
+
+  const handleChange = (event) => {
+    setMessage(event.target.value);
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/login");
+  };
+
+  const handleTitle = (name) => {
+    // const user1 = 'Darshan'; // replace with actual user1
+    // const user2 = name; // replace with actual user2
+
+    // // Set or update query parameters
+    // setSearchParams({
+    //   user1,
+    //   user2,
+    // });
+    // console.log(`Clicked ${name}`);
+
+    setTitle(name);
   };
 
   useEffect(() => {
@@ -52,32 +81,26 @@ const Chat = () => {
       }
     };
 
+    const userId= localStorage.getItem("userId");
+
+    socket.emit("save_socket_id", {
+      userId
+    });
+
+     socket.on("messageReceived", (data) => {
+        setAllMessages(data)
+      });
+
+      socket.on("user_updates", (data) => {
+        fetchData();
+      });
+
     fetchData();
 
-    socket.on("connect", () => {
-      console.log("hello");
-    });
-    console.log("socket", socket);
-    socket.emit("joined", users);
-
-    
     return () => {
-      socket.off("connect");
+      socket.off("disconnect");
     };
   }, []);
-
-  const handleChange = (event) => {
-    setMessage(event.target.value);
-  };
-
-  const handleLogout = () => {
-    navigate("/login");
-  };
-
-  const handleTitle = (name) => {
-    console.log(`Clicked ${name}`);
-    setTitle(name);
-  };
 
   return (
     <div style={{ display: "flex" }}>
@@ -113,7 +136,10 @@ const Chat = () => {
           {users.map((user, index) => (
             <ListItemButton
               key={index}
-              onClick={() => handleTitle(user.username)}
+              onClick={() => {
+                handleTitle(user.username);
+                setSocketId(user.socketId)
+              }}
             >
               <ListItemAvatar>
                 <Avatar>
@@ -129,7 +155,7 @@ const Chat = () => {
 
       <StyledMain>
         <StyledChatArea>
-          <Message />
+          <ChatArea messages={allMessages} />
         </StyledChatArea>
 
         <div

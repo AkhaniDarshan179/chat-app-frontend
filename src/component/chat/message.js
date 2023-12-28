@@ -1,9 +1,12 @@
-import React from 'react'
+import React from "react";
 
-const Message = () => {
+const ChatArea = (messages) => {
+  const message = messages.messages.message;
   return (
-    <div>Message</div>
-  )
-}
+    <div>
+      {message}
+    </div>
+  );
+};
 
-export default Message
+export default ChatArea;
