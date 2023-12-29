@@ -55,13 +55,18 @@ const Chat = () => {
   };
 
   const handleLogout = () => {
+    socket.emit("updateUserStatus", {
+      currentUser,
+      status: "Not Active",
+    });
+
     localStorage.clear();
     navigate("/login");
   };
 
   const handleTitle = async (name, id) => {
     const user1 = id;
-    const user2 = localStorage.getItem("userId");
+    const user2 = currentUser;
     if (user1 && user2) {
       const response = await messagesService.getMessages({
         user1,
@@ -84,7 +89,7 @@ const Chat = () => {
       }
     };
 
-    const userId = localStorage.getItem("userId");
+    const userId = currentUser;
 
     socket.emit("save_socket_id", {
       userId,
@@ -154,8 +159,12 @@ const Chat = () => {
                   <ImageIcon />
                 </Avatar>
               </ListItemAvatar>
-              <ListItemText primary={user.username} secondary="active" />
-              <Brightness1RoundedIcon color="success" fontSize="small" />
+              <ListItemText primary={user.username} secondary={user.status} />
+              {user.status === "Active" ? (
+                <Brightness1RoundedIcon color="success" fontSize="small" />
+              ) : (
+                <Brightness1RoundedIcon fontSize="small" />
+              )}
             </ListItemButton>
           ))}
         </List>
