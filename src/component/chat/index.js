@@ -23,6 +23,7 @@ import messagesService from "../../services/messages-service";
 import React, { useEffect, useState } from "react";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
+import Badge from "@mui/material/Badge";
 
 const drawerWidth = 240;
 
@@ -37,6 +38,7 @@ const Chat = () => {
   const [title, setTitle] = useState("");
   const [socketId, setSocketId] = useState(null);
   const [chatUser, setChatUser] = useState(null);
+  const [messageCount, setMessageCount] = useState(0);
 
   const handleSendMessage = () => {
     if (message) {
@@ -98,10 +100,20 @@ const Chat = () => {
 
     socket.on("sendMessage", (data) => {
       setAllMessages((prevAllMessages) => [...prevAllMessages, data]);
+
+      // Increment message count only if the message is not from the currently selected user
+      if (data.sender !== chatUser?._id) {
+        setMessageCount((prevCount) => prevCount + 1);
+      }
     });
 
     socket.on("messageReceived", (data) => {
       setAllMessages((prevAllMessages) => [...prevAllMessages, data]);
+
+      // Increment message count only if the message is not from the currently selected user
+      if (data.sender !== chatUser?._id) {
+        setMessageCount((prevCount) => prevCount + 1);
+      }
     });
 
     socket.on("user_updates", (data) => {
@@ -113,7 +125,7 @@ const Chat = () => {
     return () => {
       socket.off("disconnect");
     };
-  }, []);
+  }, [chatUser]);
 
   return (
     <div style={{ display: "flex" }}>
@@ -156,16 +168,16 @@ const Chat = () => {
               }}
             >
               <ListItemAvatar>
-                <Avatar>
-                  <ImageIcon />
-                </Avatar>
+                <Avatar sx={{ bgcolor: "deepOrange[500]" }}>{user.username.charAt(0)}</Avatar>
               </ListItemAvatar>
               <ListItemText primary={user.username} secondary={user.status} />
-              {user.status === "Active" ? (
-                <Brightness1RoundedIcon color="success" fontSize="small" />
-              ) : (
-                <Brightness1RoundedIcon fontSize="small" />
-              )}
+              <Badge badgeContent={messageCount} color="primary">
+                {user.status === "Active" ? (
+                  <Brightness1RoundedIcon color="success" fontSize="small" />
+                ) : (
+                  <Brightness1RoundedIcon fontSize="small" />
+                )}
+              </Badge>
             </ListItemButton>
           ))}
         </List>
