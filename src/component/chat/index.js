@@ -55,8 +55,9 @@ const Chat = () => {
   };
 
   const handleLogout = () => {
+    const userId = currentUser;
     socket.emit("updateUserStatus", {
-      currentUser,
+      userId,
       status: "Not Active",
     });
 
