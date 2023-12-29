@@ -1,10 +1,10 @@
 import axios from "axios";
 
 const messagesService = {
-  baseUrl: "http://localhost:8000/api/messages",
-  getMessages: async () => {
-    const result = await axios.get(`${messagesService.baseUrl}/:user1:user2`);
-    return result;
+  baseUrl: "http://localhost:8000/api/allmessages",
+  getMessages: async (body) => {
+    const result = await axios.post(`${messagesService.baseUrl}`, body);
+    return result.data;
   },
 };
 

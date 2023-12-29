@@ -4,7 +4,7 @@ import {
   StyledTextField,
   StyledButton,
 } from "./style";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import AppBar from "@mui/material/AppBar";
 import Avatar from "@mui/material/Avatar";
 import Brightness1RoundedIcon from "@mui/icons-material/Brightness1Rounded";
@@ -19,18 +19,17 @@ import ListItemAvatar from "@mui/material/ListItemAvatar";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import LogoutIcon from "@mui/icons-material/Logout";
+import messagesService from "../../services/messages-service";
 import React, { useEffect, useState } from "react";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
-import messagesService from "../../services/messages-service";
 
 const drawerWidth = 240;
 
 let socket;
 
 const Chat = () => {
-  // const history = useHistory();
-  const currentUser = localStorage.getItem("user");
+  const currentUser = localStorage.getItem("userId");
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [allMessages, setAllMessages] = useState([]);
@@ -39,19 +38,20 @@ const Chat = () => {
   const [socketId, setSocketId] = useState(null);
   const [chatUser, setChatUser] = useState(null);
 
-  // const [searchParams, setSearchParams] = useSearchParams();
-
   const handleSendMessage = () => {
-    console.log("socketId", socketId);
     if (message) {
-      socket.emit("sendMessage", { message, currentUser, to: socketId });
+      socket.emit("sendMessage", {
+        message,
+        sender: currentUser,
+        receiver: chatUser._id,
+        to: socketId,
+      });
       setMessage("");
     }
   };
 
   const handleChange = (event) => {
     setMessage(event.target.value);
-    // setAllMessages(event.target.value);
   };
 
   const handleLogout = () => {
@@ -59,16 +59,16 @@ const Chat = () => {
     navigate("/login");
   };
 
-  const handleTitle = (name) => {
-    // const user1 = 'Darshan'; // replace with actual user1
-    // const user2 = name; // replace with actual user2
-
-    // // Set or update query parameters
-    // setSearchParams({
-    //   user1,
-    //   user2,
-    // });
-    // console.log(`Clicked ${name}`);
+  const handleTitle = async (name, id) => {
+    const user1 = id;
+    const user2 = localStorage.getItem("userId");
+    if (user1 && user2) {
+      const response = await messagesService.getMessages({
+        user1,
+        user2,
+      });
+      setAllMessages(response.data);
+    }
 
     setTitle(name);
   };
@@ -78,7 +78,6 @@ const Chat = () => {
     const fetchData = async () => {
       try {
         const response = await chatService.getUsers();
-        console.log("usrers", response.data.data);
         setUsers(response.data.data);
       } catch (error) {
         console.log(error.message || "An error occurred while fetching users.");
@@ -91,19 +90,16 @@ const Chat = () => {
       userId,
     });
 
+    socket.on("sendMessage", (data) => {
+      setAllMessages((prevAllMessages) => [...prevAllMessages, data]);
+    });
+
     socket.on("messageReceived", (data) => {
-      console.log("data", data);
-      setAllMessages((prevAllMessages) => [...prevAllMessages, data.message]);
+      setAllMessages((prevAllMessages) => [...prevAllMessages, data]);
     });
 
     socket.on("user_updates", (data) => {
       fetchData();
-      console.log(data);
-
-      if (chatUser && data.sockets[chatUser?._id]) {
-        console.log(data.sockets[chatUser?._id]);
-        // setSocketId(data.sockets[chatUser?._id]);
-      }
     });
 
     fetchData();
@@ -118,7 +114,7 @@ const Chat = () => {
       <AppBar position="fixed">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            {title ? `${title} ${socketId}` : "ChatApp"}
+            {title ? title : "ChatApp"}
           </Typography>
           <IconButton
             size="large"
@@ -148,7 +144,7 @@ const Chat = () => {
             <ListItemButton
               key={index}
               onClick={() => {
-                handleTitle(user.username);
+                handleTitle(user.username, user._id);
                 setSocketId(user.socketId);
                 setChatUser(user);
               }}
@@ -167,7 +163,7 @@ const Chat = () => {
 
       <StyledMain>
         <StyledChatArea>
-          <ChatArea messages={allMessages} />
+          <ChatArea messages={allMessages} currentUser={currentUser} />
         </StyledChatArea>
 
         <div

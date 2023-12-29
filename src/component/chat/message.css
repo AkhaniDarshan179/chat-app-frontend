@@ -1,0 +1,25 @@
+/* message.css */
+
+.chat-area {
+  /* overflow-y: scroll; */
+  width: 100%;
+}
+
+.message {
+  padding: 8px;
+  margin: 8px;
+  border-radius: 8px;
+  max-width: 70%; /* Adjust this value based on your design */
+  clear: both; /* Clear the floats to start a new line for each message */
+}
+
+.sent {
+  background-color: #4caf50; /* Green color for sent messages */
+  color: #fff; /* White text for sent messages */
+  float: right; /* Float to the right for sent messages */
+}
+
+.received {
+  background-color: #f1f1f1; /* Light gray color for received messages */
+  float: left; /* Float to the left for received messages */
+}

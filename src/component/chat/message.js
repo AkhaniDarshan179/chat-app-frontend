@@ -1,12 +1,19 @@
+// message.js
 import React from "react";
+import "./message.css";
 
-const ChatArea = ({ messages }) => {
-  console.log("messages", messages);
-
+const ChatArea = ({ messages, currentUser }) => {
   return (
-    <div>
+    <div className="chat-area">
       {messages.map((msg, index) => (
-        <p key={index}>{msg}</p>
+        <div
+          key={index}
+          className={`message ${
+            msg.sender === currentUser ? "sent" : "received"
+          }`}
+        >
+          {msg.content}
+        </div>
       ))}
     </div>
   );
